@@ -1,0 +1,23 @@
+# ---------------------------------------------------------------------------
+# Company-supplied raw measurement data is NEVER committed.
+# Only the derived aggregate (outputs/variation_reference.json - percentages
+# and counts, no per-wafer readings) is version-controlled.
+# ---------------------------------------------------------------------------
+data/fab_thickness_profile_*.csv
+data/raw/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# Local run artefacts
+outputs/*.log
+*.log
+
+# NOTE: models/surrogate_bundle.joblib IS committed on purpose so teammates can
+# run the app without the ~19 minute training step. Regenerate with
+# `python train_model.py` if the data or model zoo changes.

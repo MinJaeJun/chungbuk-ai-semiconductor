@@ -1,0 +1,28 @@
+# AI Semiconductor Process Optimizer - runtime requirements
+# Python 3.10+ (developed and verified on 3.12)
+
+# --- data / ML core (required) ---
+numpy>=1.26
+pandas>=2.0
+scikit-learn>=1.4
+scipy>=1.11
+joblib>=1.3
+
+# --- backend (required) ---
+fastapi>=0.110
+uvicorn[standard]>=0.27
+pydantic>=2.6
+
+# --- optional -----------------------------------------------------------
+# The platform runs fully without these. If installed, they are automatically
+# added to the model comparison (train_model.py) as extra candidates.
+# xgboost>=2.0
+# lightgbm>=4.1
+#
+# SHAP is NOT required: local/global Shapley values are computed exactly
+# (all 2^4 = 16 coalitions) in core/explain.py with numpy only.
+# shap>=0.44
+#
+# plotly is NOT required: the dashboard uses a vendored Chart.js
+# (static/vendor/chart.umd.js) so the demo also works offline.
+# plotly>=5.20

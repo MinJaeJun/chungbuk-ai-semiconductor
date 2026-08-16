@@ -1,0 +1,100 @@
+==============================================================================
+ AI Semiconductor Process Optimizer - Surrogate Model Training
+==============================================================================
+
+[DATA] C:\Users\USER\Desktop\AI 반도체\chungbuk_ai_semiconductor\data\implant_anneal_1000.csv
+  rows=1000  cols=9  missing=0  duplicate_rows=0
+  DOE structure: 5 x 8 x 5 x 5 = 1000  full_factorial=True
+  identity delta_xj_um = xj_final_um - xj_implant_um -> max|residual| = 5.13e-17
+  features used: ['dose_cm2', 'energy_keV', 'anneal_temp_C', 'anneal_time_sec']
+  excluded (leakage guard): ['run_id', 'xj_implant_um', 'xj_final_um', 'delta_xj_um', 'rsh_final_ohm_sq']
+  optional libs: {'xgboost': False, 'lightgbm': False}
+
+[TRAIN] target = xj_implant_um
+    Linear Regression                          groupCV R2= 0.970217  randCV R2= 0.976254  TEST R2= 0.979316  MAE=0.0121971  RMSE=0.0141756  (0.1s)
+    Polynomial (deg2) + Ridge                  groupCV R2= 0.986776  randCV R2= 0.990756  TEST R2= 0.991272  MAE=0.0078773  RMSE=0.00920818  (0.1s)
+    Polynomial (deg3) + Ridge                  groupCV R2= 0.994725  randCV R2= 0.996834  TEST R2= 0.996783  MAE=0.00457698  RMSE=0.00559028  (0.2s)
+    Random Forest                              groupCV R2= 0.993088  randCV R2= 1.000000  TEST R2= 1.000000  MAE=1.11217e-15  RMSE=1.40116e-15  (8.0s)
+    Extra Trees                                groupCV R2= 0.994688  randCV R2= 0.999997  TEST R2= 0.999999  MAE=3.32027e-05  RMSE=8.53333e-05  (5.1s)
+    Gradient Boosting                          groupCV R2= 0.997733  randCV R2= 0.999999  TEST R2= 1.000000  MAE=5.49112e-05  RMSE=6.81699e-05  (4.0s)
+    Hist Gradient Boosting                     groupCV R2= 0.995821  randCV R2= 0.999997  TEST R2= 1.000000  MAE=3.14096e-05  RMSE=4.76286e-05  (14.0s)
+    Gaussian Process (Matern 5/2)              groupCV R2= 0.788957  randCV R2= 1.000000  TEST R2= 1.000000  MAE=4.35076e-08  RMSE=6.80985e-08  (163.9s)
+    MLP (64-64-32)                             groupCV R2= 0.978041  randCV R2= 0.985166  TEST R2= 0.979721  MAE=0.0114676  RMSE=0.0140363  (2.3s)
+
+[TRAIN] target = xj_final_um
+    Linear Regression                          groupCV R2= 0.971161  randCV R2= 0.977049  TEST R2= 0.979754  MAE=0.0119694  RMSE=0.0139729  (0.1s)
+    Polynomial (deg2) + Ridge                  groupCV R2= 0.987030  randCV R2= 0.990906  TEST R2= 0.991713  MAE=0.00759498  RMSE=0.00893941  (0.2s)
+    Polynomial (deg3) + Ridge                  groupCV R2= 0.994619  randCV R2= 0.996671  TEST R2= 0.996721  MAE=0.0045781  RMSE=0.0056235  (0.2s)
+    Random Forest                              groupCV R2= 0.992938  randCV R2= 0.999912  TEST R2= 0.999933  MAE=0.000373274  RMSE=0.00080127  (8.6s)
+    Extra Trees                                groupCV R2= 0.994573  randCV R2= 0.999934  TEST R2= 0.999952  MAE=0.000278213  RMSE=0.000678964  (6.0s)
+    Gradient Boosting                          groupCV R2= 0.997781  randCV R2= 0.999830  TEST R2= 0.999850  MAE=0.000448858  RMSE=0.00120237  (4.0s)
+    Hist Gradient Boosting                     groupCV R2= 0.995594  randCV R2= 0.999871  TEST R2= 0.999961  MAE=0.000329753  RMSE=0.000613822  (12.3s)
+    Gaussian Process (Matern 5/2)              groupCV R2= 0.993232  randCV R2= 0.999984  TEST R2= 0.999988  MAE=0.000105788  RMSE=0.000334235  (122.4s)
+    MLP (64-64-32)                             groupCV R2= 0.979537  randCV R2= 0.982791  TEST R2= 0.985096  MAE=0.00982857  RMSE=0.0119887  (2.3s)
+
+[TRAIN] target = rsh_final_ohm_sq
+    Linear Regression                          groupCV R2= 0.824159  randCV R2= 0.838039  TEST R2= 0.898220  MAE=11.6723  RMSE=15.22  (0.1s)
+    Polynomial (deg2) + Ridge                  groupCV R2= 0.927705  randCV R2= 0.941020  TEST R2= 0.960273  MAE=7.38782  RMSE=9.50882  (0.1s)
+    Polynomial (deg3) + Ridge                  groupCV R2= 0.965289  randCV R2= 0.974393  TEST R2= 0.982544  MAE=4.80354  RMSE=6.30308  (0.2s)
+    Random Forest                              groupCV R2= 0.947334  randCV R2= 0.986772  TEST R2= 0.993045  MAE=2.07714  RMSE=3.97869  (8.5s)
+    Extra Trees                                groupCV R2= 0.973715  randCV R2= 0.990369  TEST R2= 0.994523  MAE=1.71521  RMSE=3.53078  (6.2s)
+    Gradient Boosting                          groupCV R2= 0.976287  randCV R2= 0.996138  TEST R2= 0.998428  MAE=1.38821  RMSE=1.89132  (4.2s)
+    Hist Gradient Boosting                     groupCV R2= 0.970244  randCV R2= 0.993675  TEST R2= 0.999151  MAE=0.981286  RMSE=1.39039  (12.4s)
+    Gaussian Process (Matern 5/2)              groupCV R2= 0.998456  randCV R2= 0.999882  TEST R2= 0.999963  MAE=0.132226  RMSE=0.291471  (224.5s)
+    MLP (64-64-32)                             groupCV R2= 0.994773  randCV R2= 0.997661  TEST R2= 0.999871  MAE=0.344346  RMSE=0.541616  (182.8s)
+    Linear Regression [log10 target]           groupCV R2= 0.863597  randCV R2= 0.875359  TEST R2= 0.919703  MAE=8.89953  RMSE=13.5187  (0.1s)
+    Polynomial (deg2) + Ridge [log10 target]   groupCV R2= 0.948621  randCV R2= 0.959794  TEST R2= 0.975427  MAE=4.9512  RMSE=7.47847  (0.1s)
+    Polynomial (deg3) + Ridge [log10 target]   groupCV R2= 0.984158  randCV R2= 0.987838  TEST R2= 0.992787  MAE=2.82371  RMSE=4.05167  (0.2s)
+    Random Forest [log10 target]               groupCV R2= 0.942734  randCV R2= 0.986554  TEST R2= 0.992904  MAE=2.01732  RMSE=4.01864  (8.4s)
+    Extra Trees [log10 target]                 groupCV R2= 0.970772  randCV R2= 0.989523  TEST R2= 0.993646  MAE=1.74143  RMSE=3.80287  (6.1s)
+    Gradient Boosting [log10 target]           groupCV R2= 0.981652  randCV R2= 0.997145  TEST R2= 0.995722  MAE=1.75957  RMSE=3.12041  (4.0s)
+    Hist Gradient Boosting [log10 target]      groupCV R2= 0.968919  randCV R2= 0.997030  TEST R2= 0.998574  MAE=1.06566  RMSE=1.80135  (12.6s)
+
+[PAIR SELECTION] derived delta_xj on hold-out test (5 x 6 = 30 pairs within 0.005 group-CV R2 of best)
+    implant=Extra Trees                        final=Gaussian Process (Matern 5/2)      delta RMSE=0.000331386  MAE=0.000106584  R2=0.959990
+    implant=Hist Gradient Boosting             final=Gaussian Process (Matern 5/2)      delta RMSE=0.000333835  MAE=0.000113701  R2=0.959397
+    implant=Random Forest                      final=Gaussian Process (Matern 5/2)      delta RMSE=0.000334235  MAE=0.000105788  R2=0.959299
+    implant=Gradient Boosting                  final=Gaussian Process (Matern 5/2)      delta RMSE=0.000339538  MAE=0.00013382  R2=0.957997
+    implant=Hist Gradient Boosting             final=Hist Gradient Boosting             delta RMSE=0.000603034  MAE=0.000313988  R2=0.867510
+
+[XAI] computing global SHAP importance (exact Shapley, 2^4 coalitions)...
+  done in 24.6s
+
+==============================================================================
+ RESULT SUMMARY (all values measured, none hard-coded)
+==============================================================================
+
+ xj_implant_um
+   best model : Extra Trees
+   selection  : derived delta_xj hold-out RMSE (pair selection, constrained to group_cv_r2 within 0.005 of best)
+   GROUP CV (unseen dose x energy, 40 groups)  R2=0.994688  MAE=0.00597963  RMSE=0.00750191
+   RANDOM CV (5-fold, train)   R2=0.999997  MAE=5.2484e-05  RMSE=0.000172169
+   TEST (hold-out 20%)         R2=0.999999  MAE=3.32027e-05  RMSE=8.53333e-05
+   global |SHAP| : energy_keV=0.08097, log10_dose=0.004159, anneal_temp_C=0, anneal_time_sec=0
+
+ xj_final_um
+   best model : Gaussian Process (Matern 5/2)
+   selection  : derived delta_xj hold-out RMSE (pair selection, constrained to group_cv_r2 within 0.005 of best)
+   GROUP CV (unseen dose x energy, 40 groups)  R2=0.993232  MAE=0.00545882  RMSE=0.00842854
+   RANDOM CV (5-fold, train)   R2=0.999984  MAE=0.000157312  RMSE=0.000410548
+   TEST (hold-out 20%)         R2=0.999988  MAE=0.000105788  RMSE=0.000334235
+   global |SHAP| : energy_keV=0.08063, log10_dose=0.004197, anneal_temp_C=0.0009794, anneal_time_sec=0.0005143
+
+ rsh_final_ohm_sq
+   best model : Gaussian Process (Matern 5/2)
+   selection  : group_cv_r2 (GroupKFold on unseen dose x energy conditions)
+   GROUP CV (unseen dose x energy, 40 groups)  R2=0.998456  MAE=0.97169  RMSE=2.05459
+   RANDOM CV (5-fold, train)   R2=0.999882  MAE=0.228093  RMSE=0.568193
+   TEST (hold-out 20%)         R2=0.999963  MAE=0.132226  RMSE=0.291471
+   global |SHAP| : log10_dose=35.41, anneal_temp_C=14.54, energy_keV=11.36, anneal_time_sec=4.684
+
+ delta_xj_um (DERIVED, not trained directly)
+   formula    : pred(xj_final_um) - pred(xj_implant_um)
+   pair       : implant=Extra Trees | final=Gaussian Process (Matern 5/2)
+   TEST         R2=0.959990  MAE=0.000106584  RMSE=0.000331386  (30 pairs evaluated)
+
+ artifact : C:\Users\USER\Desktop\AI 반도체\chungbuk_ai_semiconductor\models\surrogate_bundle.joblib
+ report   : C:\Users\USER\Desktop\AI 반도체\chungbuk_ai_semiconductor\outputs\training_report.json
+ elapsed  : 1142.45s
+
+ 본 AI 모델은 TCAD 시뮬레이션으로 생성된 DOE 데이터로 학습되었습니다. 실제 반도체 양산 라인 적용을 위해서는 추가적인 Fab 계측 데이터 확보와 물리적 검증(Split 실험)이 반드시 필요합니다.

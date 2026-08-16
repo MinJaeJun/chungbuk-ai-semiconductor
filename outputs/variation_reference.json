@@ -1,0 +1,180 @@
+{
+  "source": {
+    "file": "fab_thickness_profile_17000.csv",
+    "process": "PECVD SiON deposition (in-line thickness metrology)",
+    "process_ko": "PECVD SiON 증착 · 인라인 두께 계측",
+    "rows": 17000,
+    "rows_primary_item": 13000,
+    "lots": 40,
+    "wafers": 1000,
+    "recipes": 6,
+    "points_per_wafer": 13,
+    "date_from": "2024-11-06 17:41:42",
+    "date_to": "2024-11-08 17:50:00",
+    "unit": "angstrom"
+  },
+  "caveat_en": "Measured on PECVD SiON deposition, a different process from ion implantation. Used only as an order-of-magnitude reference for selecting process input tolerances - never as an implant model.",
+  "caveat_ko": "본 산포는 이온주입이 아닌 PECVD SiON 증착 공정의 실측값입니다. 공정 입력 tolerance의 크기를 정할 때 참조 기준으로만 사용하며, 이온주입 공정 모델로 사용하지 않습니다.",
+  "within_wafer": {
+    "nu_pct": {
+      "mean": 7.297755292391313,
+      "median": 8.860489359934123,
+      "p90": 9.691742490193644,
+      "max": 9.748089044003633,
+      "n": 1000
+    },
+    "cv_pct": {
+      "mean": 5.146361239355373,
+      "median": 6.505632512734248,
+      "p90": 6.589255160108223,
+      "max": 6.616363543774743,
+      "n": 1000
+    },
+    "definition": "NU% = (max-min)/(2*mean) over the 13-point map; CV% = std/mean"
+  },
+  "wafer_to_wafer": {
+    "cv_pct": {
+      "mean": 0.6525959356607839,
+      "median": 0.48737473915945156,
+      "p90": 1.3779149214173163,
+      "max": 1.9429942516515013,
+      "n": 45
+    },
+    "wafers_per_lot": 25,
+    "definition": "std/mean of wafer-mean thickness inside one lot"
+  },
+  "lot_to_lot": {
+    "cv_pct": {
+      "mean": 1.2562625428037468,
+      "median": 1.186059989187551,
+      "p90": 1.506024621547678,
+      "max": 1.5073043265552089,
+      "n": 5
+    },
+    "per_recipe": [
+      {
+        "recipe": "PESION2000_E1",
+        "lots": 7,
+        "mean": 2045.4581151098903,
+        "cv_pct": 1.186059989187551
+      },
+      {
+        "recipe": "PESION2000_E2",
+        "lots": 8,
+        "mean": 2059.123446153846,
+        "cv_pct": 0.9692938340300488
+      },
+      {
+        "recipe": "PESION2000_E3",
+        "lots": 7,
+        "mean": 2009.5172420979986,
+        "cv_pct": 1.5073043265552089
+      },
+      {
+        "recipe": "PESION2000_E4",
+        "lots": 15,
+        "mean": 1996.0280707692307,
+        "cv_pct": 1.5041050640363818
+      },
+      {
+        "recipe": "PESION2000_E5",
+        "lots": 7,
+        "mean": 2066.750171899529,
+        "cv_pct": 1.1145495002095431
+      },
+      {
+        "recipe": "PESION2000_E6",
+        "lots": 1,
+        "mean": 2203.072153846154,
+        "cv_pct": null
+      }
+    ],
+    "definition": "std/mean of lot-mean thickness inside one recipe"
+  },
+  "overall": {
+    "total_cv_pct": 2.035522424722786,
+    "definition": "std/mean over every wafer mean, all recipes pooled"
+  },
+  "radial_profile": [
+    {
+      "r_mm": 0.0,
+      "mean": 1956.48865,
+      "dev_pct": -3.7053466950140517,
+      "n": 1000
+    },
+    {
+      "r_mm": 32.0,
+      "mean": 1983.8102,
+      "dev_pct": -2.3606319250076795,
+      "n": 2000
+    },
+    {
+      "r_mm": 40.0,
+      "mean": 1991.307675,
+      "dev_pct": -1.9916204534676776,
+      "n": 2000
+    },
+    {
+      "r_mm": 75.47184905645283,
+      "mean": 2069.2907425,
+      "dev_pct": 1.8465579323725885,
+      "n": 4000
+    },
+    {
+      "r_mm": 80.0,
+      "mean": 2012.67264,
+      "dev_pct": -0.9400774774590216,
+      "n": 2000
+    },
+    {
+      "r_mm": 96.0,
+      "mean": 2101.9073900000003,
+      "dev_pct": 3.4518873386962494,
+      "n": 2000
+    }
+  ],
+  "recipe_summary": [
+    {
+      "recipe": "PESION2000_E1",
+      "wafers": 166,
+      "mean": 2046.5268906394804,
+      "std": 24.053658845391475,
+      "within_wafer_nu_pct": 3.1778932684924235
+    },
+    {
+      "recipe": "PESION2000_E2",
+      "wafers": 166,
+      "mean": 2057.0582947173307,
+      "std": 22.724053185552602,
+      "within_wafer_nu_pct": 4.183660971603079
+    },
+    {
+      "recipe": "PESION2000_E3",
+      "wafers": 166,
+      "mean": 2011.579073215941,
+      "std": 35.2331984234459,
+      "within_wafer_nu_pct": 8.904466048546166
+    },
+    {
+      "recipe": "PESION2000_E4",
+      "wafers": 331,
+      "mean": 2001.5661027190333,
+      "std": 30.101392006678267,
+      "within_wafer_nu_pct": 8.921748411765101
+    },
+    {
+      "recipe": "PESION2000_E5",
+      "wafers": 166,
+      "mean": 2066.99922613531,
+      "std": 30.36979638752403,
+      "within_wafer_nu_pct": 9.677442631567796
+    },
+    {
+      "recipe": "PESION2000_E6",
+      "wafers": 5,
+      "mean": 2203.072153846154,
+      "std": 42.80556530896573,
+      "within_wafer_nu_pct": 7.608344668458825
+    }
+  ]
+}
