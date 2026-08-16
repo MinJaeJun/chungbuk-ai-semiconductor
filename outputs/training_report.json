@@ -12,7 +12,7 @@
     }
   },
   "dataset": {
-    "csv_path": "C:\\Users\\USER\\Desktop\\AI 반도체\\chungbuk_ai_semiconductor\\data\\implant_anneal_1000.csv",
+    "csv_path": "implant_anneal_1000.csv",
     "n_rows": 1000,
     "n_columns": 9,
     "n_inputs": 4,

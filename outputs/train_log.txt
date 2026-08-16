@@ -2,7 +2,7 @@
  AI Semiconductor Process Optimizer - Surrogate Model Training
 ==============================================================================
 
-[DATA] C:\Users\USER\Desktop\AI 반도체\chungbuk_ai_semiconductor\data\implant_anneal_1000.csv
+[DATA] data\implant_anneal_1000.csv
   rows=1000  cols=9  missing=0  duplicate_rows=0
   DOE structure: 5 x 8 x 5 x 5 = 1000  full_factorial=True
   identity delta_xj_um = xj_final_um - xj_implant_um -> max|residual| = 5.13e-17
@@ -93,8 +93,8 @@
    pair       : implant=Extra Trees | final=Gaussian Process (Matern 5/2)
    TEST         R2=0.959990  MAE=0.000106584  RMSE=0.000331386  (30 pairs evaluated)
 
- artifact : C:\Users\USER\Desktop\AI 반도체\chungbuk_ai_semiconductor\models\surrogate_bundle.joblib
- report   : C:\Users\USER\Desktop\AI 반도체\chungbuk_ai_semiconductor\outputs\training_report.json
+ artifact : models\surrogate_bundle.joblib
+ report   : outputs\training_report.json
  elapsed  : 1142.45s
 
  본 AI 모델은 TCAD 시뮬레이션으로 생성된 DOE 데이터로 학습되었습니다. 실제 반도체 양산 라인 적용을 위해서는 추가적인 Fab 계측 데이터 확보와 물리적 검증(Split 실험)이 반드시 필요합니다.

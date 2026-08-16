@@ -39,8 +39,12 @@ from .config import DATA_DIR, OUTPUT_DIR
 METROLOGY_CSV = DATA_DIR / "fab_thickness_profile_17000.csv"
 VARIATION_JSON = OUTPUT_DIR / "variation_reference.json"
 
-# The 13-point wafer map is the primary item; *_EG is a separate edge item.
-PRIMARY_ITEM = "THK1_1_TOP"
+# The wafer map is carried by whichever measurement item has the most rows; the
+# other item is a separate edge measurement. Detecting it beats hard-coding the
+# supplier's item label: it keeps customer naming out of this repository and
+# still works if the metrology export is renamed.
+def _primary_item(df: pd.DataFrame) -> str:
+    return str(df["item_id"].value_counts().idxmax())
 
 _CACHE: dict[str, Any] = {}
 
@@ -82,7 +86,7 @@ def analyze(force: bool = False) -> dict[str, Any]:
         )
 
     df = _load()
-    d = df[df["item_id"] == PRIMARY_ITEM]
+    d = df[df["item_id"] == _primary_item(df)]
 
     # ---- wafer level: 13 points per wafer -------------------------------
     wafer = (

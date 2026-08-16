@@ -147,7 +147,9 @@ def validate_dataset(df: pd.DataFrame | None = None) -> dict[str, Any]:
         )
 
     return {
-        "csv_path": str(CSV_PATH),
+        # File name only - an absolute path would leak the build machine's
+        # directory layout into the published report and static site.
+        "csv_path": CSV_PATH.name,
         "n_rows": int(len(df)),
         "n_columns": int(df.shape[1]),
         "n_inputs": len(PROCESS_INPUTS),
