@@ -109,7 +109,30 @@ def copy_frontend() -> None:
 # --------------------------------------------------------------------------- #
 # payload builders
 # --------------------------------------------------------------------------- #
-def build_simple(client) -> int:
+def anonymize_variation(payload: dict[str, Any]) -> dict[str, Any]:
+    """Strip supplier-identifying strings from the variation reference.
+
+    The statistics themselves (NU%, CV%, counts) are generic process-capability
+    figures. What identifies the supplier is the recipe/equipment naming and the
+    source filename, so only those are replaced. Every number is untouched,
+    which keeps all claims in the UI true.
+    """
+    p = json.loads(json.dumps(payload))
+    names = sorted({r["recipe"] for r in p.get("recipe_summary", [])})
+    alias = {n: f"Recipe {chr(65 + i)}" for i, n in enumerate(names)}
+    for r in p.get("recipe_summary", []):
+        r["recipe"] = alias.get(r["recipe"], r["recipe"])
+    for r in p.get("lot_to_lot", {}).get("per_recipe", []):
+        r["recipe"] = alias.get(r["recipe"], r["recipe"])
+    src = p.setdefault("source", {})
+    src["file"] = "in-line thickness metrology (anonymized)"
+    src["process"] = "Thin-film deposition, in-line thickness metrology"
+    src["process_ko"] = "박막 증착 공정 · 인라인 두께 계측 (익명화)"
+    p["anonymized"] = True
+    return p
+
+
+def build_simple(client, anonymize: bool = True) -> int:
     total = 0
     for endpoint, name in [
         ("/api/meta", "meta.json"),
@@ -120,6 +143,8 @@ def build_simple(client) -> int:
         ("/api/variation", "variation.json"),
     ]:
         payload = client.get(endpoint).json()
+        if name == "variation.json" and anonymize:
+            payload = anonymize_variation(payload)
         if name == "dataset_points.json":
             # MODE A is recomputed in the browser from these rows and needs the
             # run_id to report which real TCAD run each recipe came from.
@@ -253,6 +278,11 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--fast", action="store_true", help="skip predict/robust")
     ap.add_argument("--only", choices=["frontend", "simple", "whatif", "optimize", "robust", "predict"])
+    # Anonymised by default: the built site is the artefact most likely to be
+    # copied or published, so it must never carry supplier-identifying strings.
+    ap.add_argument("--keep-names", action="store_true",
+                    help="keep original recipe/equipment names in the exported "
+                         "variation reference (local inspection only)")
     args = ap.parse_args()
 
     from fastapi.testclient import TestClient
@@ -284,10 +314,10 @@ def main() -> int:
 
     if "simple" in stages:
         print("\n[2] static endpoints")
-        n = build_simple(client)
+        n = build_simple(client, anonymize=not args.keep_names)
         n += build_manifest(levels, targets)
         total += n
-        print(f"    {human(n)}")
+        print(f"    {human(n)}" + ("" if args.keep_names else "  [anonymized]"))
         verify_mode_a(client, levels)
 
     if "whatif" in stages:

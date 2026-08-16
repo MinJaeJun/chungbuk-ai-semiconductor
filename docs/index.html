@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="TCAD 기반 이온주입·열처리 공정 AI Surrogate 대시보드 정적 데모">
+<title>[DEMO] AI Semiconductor Process Optimizer | TCAD × ML Process Optimization</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/app.css">
+<script src="vendor/chart.umd.js"></script>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo-section">
+    <div class="logo">AI</div>
+    <div class="title-group">
+      <h1>AI Semiconductor Process Optimizer</h1>
+      <span>TCAD × Machine Learning × Process Optimization &nbsp;·&nbsp; From Simulation Data to Optimized Recipe</span>
+    </div>
+  </div>
+  <div class="header-actions">
+    <div class="status-badge" id="modelStatus"><span class="status-dot"></span><span id="modelStatusText">connecting…</span></div>
+    <button class="btn" id="btnExport">⭳ Export JSON</button>
+  </div>
+</header>
+
+<nav class="tabbar">
+  <button class="tab active" data-tab="explorer"><span class="tab-num">01</span>Data Explorer</button>
+  <button class="tab" data-tab="predict"><span class="tab-num">02</span>AI Prediction</button>
+  <button class="tab" data-tab="whatif"><span class="tab-num">03</span>What-If Analysis</button>
+  <button class="tab" data-tab="optimizer"><span class="tab-num">04</span>AI Process Optimizer</button>
+  <button class="tab" data-tab="xai"><span class="tab-num">05</span>XAI / Explainability</button>
+  <button class="tab" data-tab="robust"><span class="tab-num">06</span>Process Robustness</button>
+  <button class="tab" data-tab="validation"><span class="tab-num">07</span>Model Validation</button>
+</nav>
+
+<section class="kpi-strip" id="kpiStrip"></section>
+
+<main>
+
+<!-- ============================================================ EXPLORER -->
+<div class="tab-panel active" id="tab-explorer">
+
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">📊 TCAD DOE Dataset Overview</span>
+      <span class="panel-badge" id="dsBadge">–</span>
+    </div>
+    <div class="panel-content">
+      <div class="story-flow mb12" id="storyFlow"></div>
+      <div class="grid-4" id="dsStats"></div>
+      <div class="mt16 table-wrap">
+        <table class="grid-table" id="colTable"></table>
+      </div>
+    </div>
+  </div>
+
+  <div class="layout-2col">
+    <div class="col-left">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">🧪 DOE Matrix</span><span class="panel-badge cyan" id="doeBadge">–</span></div>
+        <div class="panel-content" id="doeMatrix"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">🔎 Plot Control</span></div>
+        <div class="panel-content">
+          <div class="param-group">
+            <div class="param-label"><span>X axis (process input)</span></div>
+            <select class="param-select" id="exX"></select>
+          </div>
+          <div class="param-group">
+            <div class="param-label"><span>Y axis (output metric)</span></div>
+            <select class="param-select" id="exY"></select>
+          </div>
+          <div class="param-group">
+            <div class="param-label"><span>Color by</span></div>
+            <select class="param-select" id="exC"></select>
+          </div>
+          <div class="param-hint">1,000 TCAD runs · 실제 CSV 값만 표시 (모델 예측 아님)</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-main">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">📈 Interactive Scatter</span><span class="panel-badge" id="scatterBadge">–</span></div>
+        <div class="panel-content"><div class="chart-box tall"><canvas id="exScatter"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">Dose vs Sheet Resistance</span><span class="panel-badge cyan">DOE mean ± range</span></div>
+      <div class="panel-content"><div class="chart-box"><canvas id="chDoseRsh"></canvas></div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">Energy vs Junction Depth</span><span class="panel-badge cyan">DOE mean ± range</span></div>
+      <div class="panel-content"><div class="chart-box"><canvas id="chEnergyXj"></canvas></div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">Anneal Temperature vs Sheet Resistance</span><span class="panel-badge cyan">DOE mean ± range</span></div>
+      <div class="panel-content"><div class="chart-box"><canvas id="chTempRsh"></canvas></div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">Anneal Time vs Junction Depth</span><span class="panel-badge cyan">DOE mean ± range</span></div>
+      <div class="panel-content"><div class="chart-box"><canvas id="chTimeXj"></canvas></div></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">Correlation Heatmap</span><span class="panel-badge purple" id="corrBadge">Pearson</span>
+      </div>
+      <div class="panel-content">
+        <div class="seg mb12" id="corrToggle">
+          <button class="active" data-m="pearson">Pearson</button>
+          <button data-m="spearman">Spearman</button>
+        </div>
+        <div id="corrHeat"></div>
+        <div class="param-hint mt8">Dose는 log10 스케일로 계산되었습니다. Full factorial DOE이므로 입력 변수 간 상관은 설계상 0입니다.</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">Parallel Coordinates</span><span class="panel-badge purple">1,000 runs</span></div>
+      <div class="panel-content">
+        <div class="seg mb12" id="pcColor">
+          <button class="active" data-c="rsh_final_ohm_sq">color: Rsh</button>
+          <button data-c="xj_final_um">color: Xj Final</button>
+          <button data-c="delta_xj_um">color: ΔXj</button>
+        </div>
+        <canvas id="pcCanvas" height="300"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header"><span class="panel-title">🔬 Data Observations</span><span class="panel-badge cyan">DATA OBSERVATION</span></div>
+    <div class="panel-content" id="obsList"></div>
+  </div>
+</div>
+
+<!-- ============================================================= PREDICT -->
+<div class="tab-panel" id="tab-predict">
+  <div id="predBanner"></div>
+  <div class="layout-3col">
+    <div class="col-left">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">⚙ Process Parameters</span><span class="panel-badge">INPUT</span></div>
+        <div class="panel-content">
+          <div class="param-section">
+            <div class="param-section-title">Ion Implantation</div>
+            <div class="param-group">
+              <div class="param-label"><span>Implant Dose</span><span class="param-value" id="vDose">–</span></div>
+              <input type="range" class="param-slider" id="sDose" min="0" max="1" step="0.001">
+              <div class="chip-row" id="chipDose"></div>
+            </div>
+            <div class="param-group">
+              <div class="param-label"><span>Implant Energy</span><span class="param-value" id="vEnergy">–</span></div>
+              <input type="range" class="param-slider" id="sEnergy" step="0.1">
+              <div class="chip-row" id="chipEnergy"></div>
+            </div>
+          </div>
+          <div class="param-section">
+            <div class="param-section-title">Annealing (RTA)</div>
+            <div class="param-group">
+              <div class="param-label"><span>Anneal Temperature</span><span class="param-value" id="vTemp">–</span></div>
+              <input type="range" class="param-slider" id="sTemp" step="1">
+              <div class="chip-row" id="chipTemp"></div>
+            </div>
+            <div class="param-group">
+              <div class="param-label"><span>Anneal Time</span><span class="param-value" id="vTime">–</span></div>
+              <input type="range" class="param-slider" id="sTime" step="0.5">
+              <div class="chip-row" id="chipTime"></div>
+            </div>
+          </div>
+          <div class="param-section">
+            <div class="row">
+              <button class="btn primary block" id="btnPredict">▶ AI Predict</button>
+            </div>
+            <div class="row mt8">
+              <button class="btn sm" id="btnResetPred">Reset</button>
+              <button class="btn sm" id="btnRandomDoe">Random DOE point</button>
+            </div>
+            <div class="param-hint mt8" id="predTiming">–</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-main">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">🧱 Predicted Junction Profile</span><span class="panel-badge" id="profBadge">schematic</span></div>
+        <div class="panel-content">
+          <canvas id="junctionCanvas" height="250"></canvas>
+          <div class="param-hint mt8">모델이 예측한 Xj_implant / Xj_final 값을 실리콘 단면 스케일로 시각화한 개념도입니다. 실제 doping profile 시뮬레이션 결과가 아닙니다.</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">📉 Local Sensitivity (현재 조건 기준)</span><span class="panel-badge purple">surrogate sweep</span></div>
+        <div class="panel-content"><div class="chart-box"><canvas id="sensChart"></canvas></div></div>
+      </div>
+    </div>
+
+    <div class="col-right">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">📊 Prediction Result</span><span class="panel-badge" id="predStatus">Ready</span></div>
+        <div class="panel-content">
+          <div class="results-grid" id="predResults">
+            <div class="empty-state">AI Predict 버튼을 눌러 예측을 실행하세요.</div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">🎯 Nearest TCAD DOE Run</span><span class="panel-badge cyan" id="nearBadge">–</span></div>
+        <div class="panel-content" id="nearestBox"><div class="empty-state">–</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">🧠 Local XAI · SHAP Contribution</span><span class="panel-badge purple">exact Shapley</span></div>
+      <div class="panel-content" id="localXai"><div class="empty-state">예측 실행 후 표시됩니다.</div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">💡 AI Process Insight</span><span class="panel-badge yellow">3-level evidence</span></div>
+      <div class="panel-content" id="insightBox"><div class="empty-state">예측 실행 후 표시됩니다.</div></div>
+    </div>
+  </div>
+
+  <div class="panel" id="llmPanel">
+    <div class="panel-header"><span class="panel-title">🤖 LLM Narrative (optional)</span><span class="panel-badge" id="llmBadge">disabled</span></div>
+    <div class="panel-content" id="llmBox"></div>
+  </div>
+</div>
+
+<!-- ============================================================== WHATIF -->
+<div class="tab-panel" id="tab-whatif">
+  <div class="layout-2col">
+    <div class="col-left">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">⚙ Base Condition</span><span class="panel-badge">FIXED</span></div>
+        <div class="panel-content" id="wiBase"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">↔ Sweep Parameter</span></div>
+        <div class="panel-content">
+          <div class="seg" id="wiParam">
+            <button data-p="dose_cm2">Dose</button>
+            <button data-p="energy_keV">Energy</button>
+            <button class="active" data-p="anneal_temp_C">Temp</button>
+            <button data-p="anneal_time_sec">Time</button>
+          </div>
+          <div class="param-group mt16">
+            <div class="param-label"><span>Sweep points</span><span class="param-value" id="vWiN">61</span></div>
+            <input type="range" class="param-slider" id="sWiN" min="11" max="201" step="10" value="61">
+          </div>
+          <button class="btn primary block mt8" id="btnSweep">▶ Run Sweep</button>
+          <div class="param-hint mt8">기준 조건은 AI Prediction 탭의 값을 그대로 사용합니다.</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">📐 Sweep Summary</span></div>
+        <div class="panel-content" id="wiSummary"><div class="empty-state">–</div></div>
+      </div>
+    </div>
+    <div class="col-main">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Xj Final / Xj Implant vs <span id="wiT1">Anneal Temperature</span></span><span class="panel-badge cyan" id="wiBadge1">–</span></div>
+        <div class="panel-content"><div class="chart-box"><canvas id="wiXjChart"></canvas></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Sheet Resistance vs <span id="wiT2">Anneal Temperature</span></span><span class="panel-badge cyan" id="wiBadge2">–</span></div>
+        <div class="panel-content"><div class="chart-box"><canvas id="wiRshChart"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">🪟 Process Window Overview · 4-parameter sweep</span>
+      <span class="panel-badge purple">surrogate model</span>
+    </div>
+    <div class="panel-content">
+      <div class="grid-4" id="wiAllGrid">
+        <div class="chart-box short"><canvas id="wiAll0"></canvas></div>
+        <div class="chart-box short"><canvas id="wiAll1"></canvas></div>
+        <div class="chart-box short"><canvas id="wiAll2"></canvas></div>
+        <div class="chart-box short"><canvas id="wiAll3"></canvas></div>
+      </div>
+      <div class="param-hint mt8">각 그래프는 나머지 3개 변수를 기준 조건에 고정한 상태에서 해당 변수만 학습 범위 전체로 변화시킨 surrogate 예측입니다. ● 점은 조건이 일치하는 실제 TCAD run입니다.</div>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================== OPTIMIZER -->
+<div class="tab-panel" id="tab-optimizer">
+  <div class="layout-3col">
+    <div class="col-left">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">🎯 Target Spec</span><span class="panel-badge">GOAL</span></div>
+        <div class="panel-content">
+          <div class="param-section">
+            <div class="param-section-title">Junction Depth</div>
+            <div class="param-group">
+              <div class="param-label"><span>Target Xj Final [um]</span><span class="param-value" id="vOptXj">0.25</span></div>
+              <input type="range" class="param-slider" id="sOptXj" step="0.001">
+              <div class="param-hint" id="optXjRange">–</div>
+            </div>
+            <div class="param-group">
+              <div class="param-label"><span>Tolerance ± [um]</span><span class="param-value" id="vOptTol">0.010</span></div>
+              <input type="range" class="param-slider" id="sOptTol" min="0.001" max="0.05" step="0.001" value="0.01">
+            </div>
+          </div>
+          <div class="param-section">
+            <div class="param-section-title">Sheet Resistance</div>
+            <div class="seg" id="optRshMode">
+              <button class="active" data-m="minimize">최소화</button>
+              <button data-m="constraint">상한 지정</button>
+            </div>
+            <div class="param-group mt12 hidden" id="rshMaxGroup">
+              <div class="param-label"><span>Rsh ≤ [ohm/sq]</span><span class="param-value" id="vOptRsh">80</span></div>
+              <input type="range" class="param-slider" id="sOptRsh" step="1">
+            </div>
+          </div>
+          <div class="param-section">
+            <div class="param-section-title">Multi-objective Weight</div>
+            <div class="param-group">
+              <div class="param-label"><span>Xj 정확도 ↔ Rsh 최소화</span><span class="param-value" id="vOptW">0.6 / 0.4</span></div>
+              <input type="range" class="param-slider" id="sOptW" min="0" max="1" step="0.05" value="0.6">
+              <div class="param-hint">score = (w_xj·|ΔXj|/range + w_rsh·Rsh_norm) / (w_xj+w_rsh) · 낮을수록 우수</div>
+            </div>
+          </div>
+          <div class="param-section">
+            <div class="param-section-title">Search Mode</div>
+            <div class="seg" id="optMode">
+              <button class="active" data-m="doe">MODE A · Validated DOE</button>
+              <button data-m="ai">MODE B · AI Interpolation</button>
+            </div>
+            <div class="param-hint mt8" id="optModeHint">실제 TCAD 1,000 조건 중에서 탐색합니다. 추가 보간 오차가 없습니다.</div>
+          </div>
+          <div class="param-section">
+            <div class="param-section-title">Constraint (optional lock)</div>
+            <div class="param-group">
+              <div class="param-label"><span>Lock parameter</span></div>
+              <select class="param-select" id="optLockKey">
+                <option value="">없음</option>
+                <option value="dose_cm2">Dose 고정</option>
+                <option value="energy_keV">Energy 고정</option>
+                <option value="anneal_temp_C">Anneal Temp 고정</option>
+                <option value="anneal_time_sec">Anneal Time 고정</option>
+              </select>
+            </div>
+            <div class="param-group hidden" id="optLockValGroup">
+              <div class="param-label"><span>Lock value</span></div>
+              <select class="param-select" id="optLockVal"></select>
+            </div>
+          </div>
+          <div class="param-section">
+            <div class="param-section-title">Robustness</div>
+            <div class="seg" id="optRobust">
+              <button class="active" data-r="0">Nominal only</button>
+              <button data-r="1">+ 산포 재평가</button>
+            </div>
+            <div class="param-hint mt8">실측 기준 장비 산포로 Top-N을 Monte-Carlo 재평가하여 <b>수율 기준 순위</b>를 함께 계산합니다.</div>
+          </div>
+          <button class="btn primary block" id="btnOptimize">▶ Run AI Optimization</button>
+          <div class="param-hint mt8" id="optTiming">–</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-main">
+      <div id="optBanner"></div>
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">📌 Pareto Frontier · Xj Error vs Sheet Resistance</span>
+          <span class="panel-badge purple" id="paretoBadge">–</span>
+        </div>
+        <div class="panel-content"><div class="chart-box tall"><canvas id="paretoChart"></canvas></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">🏆 Recommended Process Recipes</span><span class="panel-badge" id="recipeBadge">–</span></div>
+        <div class="panel-content table-wrap"><table class="grid-table" id="recipeTable"></table></div>
+      </div>
+      <div class="panel hidden" id="robustPanel">
+        <div class="panel-header">
+          <span class="panel-title">🎲 산포 반영 재순위 · Nominal vs Robust</span>
+          <span class="panel-badge yellow" id="robustBadge">–</span>
+        </div>
+        <div class="panel-content table-wrap"><table class="grid-table" id="robustTable"></table></div>
+      </div>
+    </div>
+
+    <div class="col-right">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">🔍 Search Summary</span></div>
+        <div class="panel-content" id="optSummary"><div class="empty-state">최적화를 실행하세요.</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">💡 AI Process Insight</span><span class="panel-badge yellow">3-level evidence</span></div>
+        <div class="panel-content" id="optInsight"><div class="empty-state">–</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================= XAI -->
+<div class="tab-panel" id="tab-xai">
+  <div class="banner info">
+    <span class="banner-icon">🧠</span>
+    <div>
+      <b>Global Explainability.</b> Permutation Feature Importance는 hold-out test set에서 각 변수를 무작위로 섞었을 때의 R² 감소량으로 측정했습니다(30회 반복).
+      Global SHAP은 4개 변수 전체 조합(2⁴=16 coalition)에 대한 정확한 interventional Shapley value의 평균 절대값입니다. 두 값 모두 학습된 모델에서 실제 계산되었습니다.
+    </div>
+  </div>
+  <div class="grid-3" id="xaiGlobal"></div>
+  <div class="panel">
+    <div class="panel-header"><span class="panel-title">📚 XAI Method</span></div>
+    <div class="panel-content" id="xaiMethod"></div>
+  </div>
+</div>
+
+<!-- ============================================================== ROBUST -->
+<div class="tab-panel" id="tab-robust">
+  <div class="banner info">
+    <span class="banner-icon">🎲</span>
+    <div>
+      <b>왜 필요한가.</b> TCAD DOE는 결정론적이라 한 조건에 답이 하나뿐이고 surrogate는 이를 1e-8 수준으로 재현합니다.
+      그러나 실제 라인은 모든 setpoint에 산포가 실립니다. 산포를 고려하지 않은 "최적 조건"은 목표값에 정확히 맞으면서도
+      웨이퍼 대부분을 spec 밖으로 흘려보낼 수 있습니다. 이 탭은 <b>실측 라인에서 측정한 산포 크기</b>를 기준으로
+      Monte-Carlo를 돌려 <b>spec 수율 · Cpk · 어떤 변수의 산포가 결과 산포를 지배하는지</b>를 계산합니다.
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">📏 실측 공정 산포 레퍼런스</span>
+      <span class="panel-badge cyan" id="varBadge">–</span>
+    </div>
+    <div class="panel-content" id="varRef"><div class="empty-state">loading…</div></div>
+  </div>
+
+  <div class="layout-3col">
+    <div class="col-left">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">⚙ Nominal Recipe</span><span class="panel-badge">SETPOINT</span></div>
+        <div class="panel-content">
+          <div id="rbBase"></div>
+          <div class="param-hint mt8">AI Prediction 탭의 조건을 그대로 사용합니다.</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">🎯 Spec</span></div>
+        <div class="panel-content">
+          <div class="param-group">
+            <div class="param-label"><span>Target Xj Final [um]</span><span class="param-value" id="vRbXj">0.250</span></div>
+            <input type="range" class="param-slider" id="sRbXj" step="0.001">
+          </div>
+          <div class="param-group">
+            <div class="param-label"><span>Xj Tolerance ± [um]</span><span class="param-value" id="vRbTol">0.004</span></div>
+            <input type="range" class="param-slider" id="sRbTol" min="0.001" max="0.02" step="0.0005" value="0.004">
+          </div>
+          <div class="param-group">
+            <div class="param-label"><span>Rsh 상한 [ohm/sq]</span><span class="param-value" id="vRbRsh">–</span></div>
+            <input type="range" class="param-slider" id="sRbRsh" step="1">
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">📐 Equipment Tolerance (1σ)</span></div>
+        <div class="panel-content">
+          <div class="seg mb12" id="rbPreset"></div>
+          <div id="rbCvControls"></div>
+          <button class="btn primary block mt8" id="btnRobust">▶ Run Monte-Carlo</button>
+          <div class="param-hint mt8" id="rbTiming">–</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-main">
+      <div id="rbWarn"></div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">📊 Xj Final 분포 vs Spec</span><span class="panel-badge purple" id="rbXjBadge">–</span></div>
+        <div class="panel-content"><div class="chart-box"><canvas id="rbXjHist"></canvas></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">📊 Sheet Resistance 분포 vs 상한</span><span class="panel-badge cyan" id="rbRshBadge">–</span></div>
+        <div class="panel-content"><div class="chart-box"><canvas id="rbRshHist"></canvas></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">🔧 산포 기여도 · 어떤 변수의 산포를 잡아야 하는가</span>
+          <span class="panel-badge yellow">variance decomposition</span>
+        </div>
+        <div class="panel-content" id="rbDecomp"><div class="empty-state">–</div></div>
+      </div>
+    </div>
+
+    <div class="col-right">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">✅ Spec 수율</span><span class="panel-badge" id="rbYieldBadge">–</span></div>
+        <div class="panel-content" id="rbYield"><div class="empty-state">Monte-Carlo를 실행하세요.</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">🔬 두 가지 불확실성</span><span class="panel-badge purple">model vs process</span></div>
+        <div class="panel-content" id="rbUnc"><div class="empty-state">–</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================== VALIDATION -->
+<div class="tab-panel" id="tab-validation">
+  <div class="banner warn" id="valDisclaimer"></div>
+  <div class="panel">
+    <div class="panel-header"><span class="panel-title">🧾 Dataset Coverage & Split</span><span class="panel-badge" id="valCovBadge">–</span></div>
+    <div class="panel-content" id="valCoverage"></div>
+  </div>
+  <div id="valTargets"></div>
+  <div class="footer-note" id="valFooter"></div>
+</div>
+
+</main>
+
+<script src="js/core.js"></script>
+<script src="js/demo-shim.js"></script>
+<script src="js/explorer.js"></script>
+<script src="js/predict.js"></script>
+<script src="js/whatif.js"></script>
+<script src="js/optimizer.js"></script>
+<script src="js/xai.js"></script>
+<script src="js/robust.js"></script>
+<script src="js/validation.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
