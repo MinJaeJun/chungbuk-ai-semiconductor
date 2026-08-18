@@ -6,6 +6,7 @@
 const TAB_INIT = {
   explorer: false, predict: false, whatif: false,
   optimizer: false, xai: false, robust: false, validation: false,
+  rigor: false,
 };
 
 function switchTab(name) {
@@ -27,6 +28,7 @@ async function lazyInit(name) {
     else if (name === 'xai') await Xai.init();
     else if (name === 'robust') await Robust.init();
     else if (name === 'validation') await Validation.init();
+    else if (name === 'rigor') await Rigor.init();
   } catch (e) {
     TAB_INIT[name] = false;
     const panel = document.getElementById(`tab-${name}`);

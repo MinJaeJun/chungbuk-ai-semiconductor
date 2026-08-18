@@ -350,6 +350,22 @@ table.grid-table td.name { font-family: inherit; color: var(--text-secondary); w
 .chart-box.short { height: 190px; }
 .chart-box.xtall { height: 420px; }
 
+/* ---------------------------------------------- DOE audit / physics guard */
+/* Monotonicity matrix: green means the data already satisfies the expected
+   direction, red means it does not. Only one column is red, and that is the
+   point of the table. */
+table.grid-table td.pos { color: var(--accent-green); }
+table.grid-table td.warnv { color: var(--accent-yellow); }
+table.grid-table td.neg { color: var(--accent-red); font-weight: 600; }
+table.grid-table td.muted { color: var(--text-muted); }
+
+.rigor-list { margin: 0; padding-left: 18px; }
+.rigor-list li {
+    font-size: 12.5px; line-height: 1.75; color: var(--text-secondary);
+    margin-bottom: 7px;
+}
+.rigor-list li:last-child { margin-bottom: 0; }
+
 /* ----------------------------------------------------------------- misc */
 .mono { font-family: var(--mono); }
 .muted { color: var(--text-muted); }

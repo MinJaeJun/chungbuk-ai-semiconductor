@@ -21,10 +21,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 warnings.filterwarnings("ignore")
 
 from core import (  # noqa: E402
+    chungbuk,
     config,
     dataset,
+    doe_audit,
     explain,
     optimize,
+    physics_guard,
     robust,
     surrogate,
     variation,
@@ -434,6 +437,116 @@ def test_api_rejects_invalid_input():
     client = TestClient(app_module.app)
     r = client.post("/api/predict", json={**BASE, "dose_cm2": -1})
     assert r.status_code == 422
+
+
+# ------------------------------------------------------- physics guard / DOE
+def test_dose_is_the_only_axis_that_breaks_monotonicity():
+    """Ten of eleven asserted (target, axis) pairs are already ordered."""
+    measured = physics_guard.measure_monotonicity()
+    offenders = {
+        (target, axis)
+        for target, axes in measured.items()
+        for axis, stat in axes.items()
+        if stat["asserted"] and stat["violation_rate"] > 0.05
+    }
+    assert offenders == {("xj_implant_um", "dose_cm2"), ("xj_final_um", "dose_cm2")}
+    # Rsh falls with every input, exactly as implant/anneal physics requires.
+    for axis in ("dose_cm2", "anneal_temp_C", "anneal_time_sec"):
+        assert measured["rsh_final_ohm_sq"][axis]["violations"] == 0
+
+
+def test_dose_artifact_is_systematic_not_random():
+    """A per-level offset repeating across energies is a simulator artifact."""
+    report = doe_audit.audit_monotonicity(dataset.load_dataset())
+    assert not report["monotone_everywhere"]
+    assert report["shape_reproducibility_corr"]["mean"] > 0.85
+
+
+def test_guard_removes_every_dose_violation():
+    lattice = physics_guard.get_lattice()
+    for target in physics_guard.GUARDED_TARGETS:
+        sign = physics_guard.MONOTONE_EXPECTATION[target]["dose_cm2"]
+        assert sign > 0
+        raw = np.diff(lattice.raw_values[target], axis=0)
+        fixed = np.diff(lattice.values[target], axis=0)
+        assert (raw < 0).sum() > 0
+        assert (fixed < -1e-12).sum() == 0
+
+
+def test_guard_cost_stays_below_the_models_own_error():
+    """The constraint must not cost more than the surrogate's honest error."""
+    report = physics_guard.audit()
+    for stats in report["targets"].values():
+        assert stats["lattice_violations_after"] == 0
+        assert stats["cost_vs_group_cv_mae"] is not None
+        assert stats["cost_vs_group_cv_mae"] < 0.5
+
+
+def test_guard_preserves_the_delta_identity():
+    guarded = physics_guard.predict_guarded(*ARGS)
+    assert np.allclose(
+        guarded["delta_xj_um"], guarded["xj_final_um"] - guarded["xj_implant_um"]
+    )
+
+
+def test_guarded_prediction_is_monotone_in_dose():
+    bounds = dataset.input_bounds()
+    doses = np.linspace(bounds["dose_cm2"]["min"], bounds["dose_cm2"]["max"], 25)
+    guarded = physics_guard.predict_guarded(
+        doses, np.full(25, 20.0), np.full(25, 1000.0), np.full(25, 25.0)
+    )
+    xj = guarded["xj_final_um"]
+    assert np.all(np.isfinite(xj))
+    assert np.all(np.diff(xj) >= -1e-12)
+
+
+# ------------------------------------------------------------ regional case
+def test_regional_profile_is_measured_from_the_register():
+    profile = chungbuk.regional_profile()
+    frame = chungbuk.load_firms()
+    assert profile["total_firms"] == len(frame)
+    assert sum(c["firms"] for c in profile["by_city"]) == len(frame)
+    assert (
+        sum(s["firms"] for s in profile["core_segments"])
+        == profile["core_semiconductor_firms"]
+    )
+
+
+def test_regional_case_claims_no_demand():
+    case = chungbuk.deployment_case()
+    assert "수요를 추정하지 않았습니다" in case["caveat"]
+    assert case["profile"]["core_semiconductor_firms"] > 0
+
+
+def test_audit_and_regional_endpoints():
+    from fastapi.testclient import TestClient
+
+    import app as app_module
+
+    client = TestClient(app_module.app)
+
+    guard = client.get("/api/physics/guard")
+    assert guard.status_code == 200
+    for stats in guard.json()["targets"].values():
+        assert stats["lattice_violations_after"] == 0
+
+    regional = client.get("/api/regional")
+    assert regional.status_code == 200
+    assert regional.json()["profile"]["total_firms"] == len(chungbuk.load_firms())
+
+    compare = client.post("/api/physics/compare", json=BASE)
+    assert compare.status_code == 200
+    targets = compare.json()["targets"]
+    assert targets["xj_final_um"]["guarded_axis"] is True
+    assert abs(
+        targets["delta_xj_um"]["guarded"]
+        - (targets["xj_final_um"]["guarded"] - targets["xj_implant_um"]["guarded"])
+    ) < 1e-12
+
+    audit_resp = client.get("/api/doe/audit")
+    assert audit_resp.status_code in (200, 503)
+    if audit_resp.status_code == 200:
+        assert audit_resp.json()["dataset"]["full_factorial"] is True
 
 
 # ------------------------------------------------------------------ runner

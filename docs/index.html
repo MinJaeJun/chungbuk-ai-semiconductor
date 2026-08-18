@@ -33,6 +33,7 @@
   <button class="tab" data-tab="xai"><span class="tab-num">05</span>XAI / Explainability</button>
   <button class="tab" data-tab="robust"><span class="tab-num">06</span>Process Robustness</button>
   <button class="tab" data-tab="validation"><span class="tab-num">07</span>Model Validation</button>
+  <button class="tab" data-tab="rigor"><span class="tab-num">08</span>DOE 감사 · Physics Guard</button>
 </nav>
 
 <section class="kpi-strip" id="kpiStrip"></section>
@@ -522,6 +523,38 @@
   <div class="footer-note" id="valFooter"></div>
 </div>
 
+<div class="tab-panel" id="tab-rigor">
+  <div class="banner warn" id="rigorDisclaimer"></div>
+
+  <div class="panel">
+    <div class="panel-header"><span class="panel-title">📉 DOE 정보량 — 1,000 run 중 몇 개가 필요한가</span><span class="panel-badge" id="rigorCurveBadge">–</span></div>
+    <div class="panel-content">
+      <div class="chart-box tall"><canvas id="rigorCurveChart"></canvas></div>
+      <div id="rigorCurveNote"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header"><span class="panel-title">🧭 물리 단조성 검사 — 기대 방향 위반 횟수</span><span class="panel-badge" id="rigorMonoBadge">–</span></div>
+    <div class="panel-content" id="rigorMono"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header"><span class="panel-title">🛡 Physics Guard — dose 축 등장성 투영</span><span class="panel-badge" id="rigorGuardBadge">–</span></div>
+    <div class="panel-content">
+      <div class="chart-box short"><canvas id="rigorGuardChart"></canvas></div>
+      <div id="rigorGuard"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header"><span class="panel-title">🏭 지역 적합성 — 충북 반도체 산업 구조</span><span class="panel-badge" id="rigorRegionBadge">–</span></div>
+    <div class="panel-content" id="rigorRegion"></div>
+  </div>
+
+  <div class="footer-note" id="rigorFooter"></div>
+</div>
+
 </main>
 
 <script src="js/core.js"></script>
@@ -533,6 +566,7 @@
 <script src="js/xai.js"></script>
 <script src="js/robust.js"></script>
 <script src="js/validation.js"></script>
+<script src="js/rigor.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

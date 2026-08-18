@@ -21,8 +21,14 @@ import json
 import re
 import shutil
 import time
+import warnings
 from pathlib import Path
 from typing import Any
+
+# The deployed GP re-emits the same joblib/sklearn notices on every one of the
+# tens of thousands of predictions this script makes. They say nothing about the
+# exported numbers and would bury the progress output, so they are silenced.
+warnings.filterwarnings("ignore")
 
 from core.config import BASE_DIR, MODEL_TARGETS, STATIC_DIR
 from core.dataset import doe_levels, load_dataset
@@ -141,8 +147,16 @@ def build_simple(client, anonymize: bool = True) -> int:
         ("/api/xai/global", "xai_global.json"),
         ("/api/validation", "validation.json"),
         ("/api/variation", "variation.json"),
+        ("/api/physics/guard", "physics_guard.json"),
+        ("/api/regional", "regional.json"),
+        ("/api/doe/audit", "doe_audit.json"),
     ]:
-        payload = client.get(endpoint).json()
+        response = client.get(endpoint)
+        if response.status_code == 503:
+            # DOE audit is optional: it needs `python audit_doe.py` first.
+            print(f"  skip {endpoint} (not generated)")
+            continue
+        payload = response.json()
         if name == "variation.json" and anonymize:
             payload = anonymize_variation(payload)
         if name == "dataset_points.json":

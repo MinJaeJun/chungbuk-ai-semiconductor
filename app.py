@@ -9,7 +9,10 @@ Run:
 
 from __future__ import annotations
 
+import json
 from typing import Any, Literal
+
+import numpy as np
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,12 +20,13 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from core import llm
+from core import chungbuk, llm, physics_guard, surrogate
 from core.config import (
     DISCLAIMER_EN,
     DISCLAIMER_KO,
     INPUT_META,
     MODEL_TARGETS,
+    OUTPUT_DIR,
     PROCESS_INPUTS,
     STATIC_DIR,
     TARGET_META,
@@ -437,6 +441,58 @@ def validation() -> dict[str, Any]:
             "group_validation": block["group_validation"],
         }
     return out
+
+# --------------------------------------------------------------------------- #
+# DOE audit / physics guard / regional fit
+# --------------------------------------------------------------------------- #
+@app.get("/api/doe/audit")
+def doe_audit_report() -> dict[str, Any]:
+    """Cached DOE information-content audit (run `python audit_doe.py` to build)."""
+    path = OUTPUT_DIR / "doe_audit_report.json"
+    if not path.exists():
+        raise HTTPException(
+            status_code=503,
+            detail="DOE audit not generated yet. Run: python audit_doe.py",
+        )
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+@app.get("/api/physics/guard")
+def physics_guard_report() -> dict[str, Any]:
+    """Monotonicity audit plus what the dose-axis constraint fixes and costs."""
+    _require_model()
+    return physics_guard.audit()
+
+
+@app.post("/api/physics/compare")
+def physics_compare(req: PredictRequest) -> dict[str, Any]:
+    """Raw surrogate vs dose-monotone guarded surrogate at one condition."""
+    _require_model()
+    args = (req.dose_cm2, req.energy_keV, req.anneal_temp_C, req.anneal_time_sec)
+    raw = surrogate.predict_raw(*args)
+    guarded = physics_guard.predict_guarded(*args)
+    out: dict[str, Any] = {"inputs": req.model_dump(), "targets": {}}
+    for target in ("xj_implant_um", "xj_final_um", "delta_xj_um"):
+        raw_value = float(np.asarray(raw[target]).ravel()[0])
+        guard_value = float(np.asarray(guarded[target]).ravel()[0])
+        out["targets"][target] = {
+            "raw": raw_value,
+            "guarded": guard_value,
+            "shift": guard_value - raw_value,
+            "guarded_axis": target in physics_guard.GUARDED_TARGETS,
+        }
+    out["note"] = (
+        "guarded 값은 dose 축 등장성 투영 결과입니다. "
+        "TCAD 격자 재현 오차는 소폭 늘어나지만 dose 단조성이 보장됩니다."
+    )
+    return out
+
+
+@app.get("/api/regional")
+def regional_fit() -> dict[str, Any]:
+    """Chungbuk semiconductor industry composition, aggregated from open data."""
+    return chungbuk.deployment_case()
+
 
 
 @app.post("/api/insight/llm")

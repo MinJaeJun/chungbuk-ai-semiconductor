@@ -204,6 +204,9 @@ const DEMO = {
     '/api/xai/global': 'xai_global.json',
     '/api/validation': 'validation.json',
     '/api/variation': 'variation.json',
+    '/api/physics/guard': 'physics_guard.json',
+    '/api/regional': 'regional.json',
+    '/api/doe/audit': 'doe_audit.json',
     '/api/health': null,
   };
 
